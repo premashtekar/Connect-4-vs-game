@@ -3,96 +3,131 @@ import random
 print("Welcome to Connect Four")
 print("-----------------------")
 
-possibleLetters = ["A", "B", "C", "D", "E", "F", "G"]
-gameBoard = [["" for _ in range(7)] for _ in range(6)]
+possibleLetters = ["A","B","C","D","E","F","G"]
+gameBoard = [["","","","","","",""], ["","","","","","",""], ["","","","","","",""], ["","","","","","",""], ["","","","","","",""], ["","","","","","",""]]
+
 rows = 6
 cols = 7
 
 def printGameBoard():
-    print("\n     A    B    C    D    E    F    G  ", end="")
-    for x in range(rows):
-        print("\n   +----+----+----+----+----+----+----+")
-        print(x, " |", end="")
-        for y in range(cols):
-            if gameBoard[x][y] == "🔵":
-                print("", gameBoard[x][y], end=" |")
-            elif gameBoard[x][y] == "🔴":
-                print("", gameBoard[x][y], end=" |")
-            else:
-                print(" ", gameBoard[x][y], end="  |")
-        print()
-    print("   +----+----+----+----+----+----+----+")
+  print("\n     A    B    C    D    E    F    G  ", end="")
+  for x in range(rows):
+    print("\n   +----+----+----+----+----+----+----+")
+    print(x, " |", end="")
+    for y in range(cols):
+      if(gameBoard[x][y] == "🔵"):
+        print("",gameBoard[x][y], end=" |")
+      elif(gameBoard[x][y] == "🔴"):
+        print("", gameBoard[x][y], end=" |")
+      else:
+        print(" ", gameBoard[x][y], end="  |")
+  print("\n   +----+----+----+----+----+----+----+")
 
-def modifyTurn(spacePicked, turn):
-    gameBoard[spacePicked[0]][spacePicked[1]] = turn
+def modifyArray(spacePicked, turn):
+  gameBoard[spacePicked[0]][spacePicked[1]] = turn
 
-def get_column_index(letter):
-    return possibleLetters.index(letter.upper())
+def checkForWinner(chip):
+  ### Check horizontal spaces
+  for y in range(rows):
+    for x in range(cols - 3):
+      if gameBoard[x][y] == chip and gameBoard[x+1][y] == chip and gameBoard[x+2][y] == chip and gameBoard[x+3][y] == chip:
+        print("\nGame over", chip, "wins! Thank you for playing :)")
+        return True
 
-def find_lowest_empty_row(col):
-    for row in range(rows - 1, -1, -1):
-        if gameBoard[row][col] == "":
-            return row
-    return -1
+  ### Check vertical spaces
+  for x in range(rows):
+    for y in range(cols - 3):
+      if gameBoard[x][y] == chip and gameBoard[x][y+1] == chip and gameBoard[x][y+2] == chip and gameBoard[x][y+3] == chip:
+        print("\nGame over", chip, "wins! Thank you for playing :)")
+        return True
 
-def check_winner(player):
-    # Check horizontal
-    for r in range(rows):
-        for c in range(cols - 3):
-            if all(gameBoard[r][c + i] == player for i in range(4)):
-                return True
+  ### Check upper right to bottom left diagonal spaces
+  for x in range(rows - 3):
+    for y in range(3, cols):
+      if gameBoard[x][y] == chip and gameBoard[x+1][y-1] == chip and gameBoard[x+2][y-2] == chip and gameBoard[x+3][y-3] == chip:
+        print("\nGame over", chip, "wins! Thank you for playing :)")
+        return True
 
-    # Check vertical
-    for r in range(rows - 3):
-        for c in range(cols):
-            if all(gameBoard[r + i][c] == player for i in range(4)):
-                return True
+  ### Check upper left to bottom right diagonal spaces
+  for x in range(rows - 3):
+    for y in range(cols - 3):
+      if gameBoard[x][y] == chip and gameBoard[x+1][y+1] == chip and gameBoard[x+2][y+2] == chip and gameBoard[x+3][y+3] == chip:
+        print("\nGame over", chip, "wins! Thank you for playing :)")
+        return True
+  return False
 
-    # Check diagonal (positive slope)
-    for r in range(rows - 3):
-        for c in range(cols - 3):
-            if all(gameBoard[r + i][c + i] == player for i in range(4)):
-                return True
+def coordinateParser(inputString):
+  coordinate = [None] * 2
+  if(inputString[0] == "A"):
+    coordinate[1] = 0
+  elif(inputString[0] == "B"):
+    coordinate[1] = 1
+  elif(inputString[0] == "C"):
+    coordinate[1] = 2
+  elif(inputString[0] == "D"):
+    coordinate[1] = 3
+  elif(inputString[0] == "E"):
+    coordinate[1] = 4
+  elif(inputString[0] == "F"):
+    coordinate[1] = 5
+  elif(inputString[0] == "G"):
+    coordinate[1] = 6
+  else:
+    print("Invalid")
+  coordinate[0] = int(inputString[1])
+  return coordinate
 
-    # Check diagonal (negative slope)
-    for r in range(3, rows):
-        for c in range(cols - 3):
-            if all(gameBoard[r - i][c + i] == player for i in range(4)):
-                return True
+def isSpaceAvailable(intendedCoordinate):
+  if(gameBoard[intendedCoordinate[0]][intendedCoordinate[1]] == '🔴'):
     return False
+  elif(gameBoard[intendedCoordinate[0]][intendedCoordinate[1]] == '🔵'):
+    return False
+  else:
+    return True
 
-def is_board_full():
-    return all(gameBoard[0][c] != "" for c in range(cols))
+def gravityChecker(intendedCoordinate):
+  ### Calculate space below
+  spaceBelow = [None] * 2
+  spaceBelow[0] = intendedCoordinate[0] + 1
+  spaceBelow[1] = intendedCoordinate[1]
+  ### Is the coordinate at ground level
+  if(spaceBelow[0] == 6):
+    return True
+  ### Check if there's a token below
+  if(isSpaceAvailable(spaceBelow) == False):
+    return True
+  return False
 
+leaveLoop = False
 turnCounter = 0
-while True:
+while(leaveLoop == False):
+  if(turnCounter % 2 == 0):
     printGameBoard()
-    current_player = "🔵" if turnCounter % 2 == 0 else "🔴"
-    player_name = "Player 1 (Blue)" if current_player == "🔵" else "Player 2 (Red)"
-
     while True:
-        move = input(f"{player_name}, choose a column (A-G): ").upper()
-        if move not in possibleLetters:
-            print("Invalid input. Please choose a column A-G.")
-            continue
-
-        col = get_column_index(move)
-        row = find_lowest_empty_row(col)
-        if row == -1:
-            print("Column is full. Choose another column.")
-            continue
-
-        modifyTurn((row, col), current_player)
-        break
-
-    if check_winner(current_player):
-        printGameBoard()
-        print(f"{player_name} wins!")
-        break
-
-    if is_board_full():
-        printGameBoard()
-        print("It's a draw!")
-        break
-
+      spacePicked = input("\nChoose a space: ")
+      coordinate = coordinateParser(spacePicked)
+      try:
+        ### Check if the space is available
+        if(isSpaceAvailable(coordinate) and gravityChecker(coordinate)):
+          modifyArray(coordinate, '🔵')
+          break
+        else:
+          print("Not a valid coordinate")
+      except:
+        print("Error occured. Please try again.")
+    winner = checkForWinner('🔵')
     turnCounter += 1
+  ### It's the computers turn
+  else:
+    while True:
+      cpuChoice = [random.choice(possibleLetters), random.randint(0,5)]
+      cpuCoordinate = coordinateParser(cpuChoice)
+      if(isSpaceAvailable(cpuCoordinate) and gravityChecker(cpuCoordinate)):
+        modifyArray(cpuCoordinate, '🔴')
+        break
+    turnCounter += 1
+    winner = checkForWinner('🔴')
+
+  if(winner):
+    printGameBoard()
+    break
